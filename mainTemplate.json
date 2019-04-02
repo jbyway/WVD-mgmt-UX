@@ -229,7 +229,7 @@
                     ]
                 },
                 {
-                    "type": "AADcredentials",
+                    "type": "credentials",
                     "name": "[variables('AADcredentialName')]",
                     "apiVersion": "2015-01-01-preview",
                     "location": "[resourceGroup().location]",
