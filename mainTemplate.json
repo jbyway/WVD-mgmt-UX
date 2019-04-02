@@ -57,8 +57,8 @@
         "hostingPlanName": "[concat(parameters('ApplicationName'),'-SPlan')]",
         "serviceplansku":"S1",
         "workerSize": "0",
-        "baseURL": "https://raw.githubusercontent.com/Azure/RDS-Templates/master/wvd-templates/wvd-management-ux/deploy/scripts/",
-        "scriptUri": "https://raw.githubusercontent.com/Azure/RDS-Templates/master/wvd-templates/wvd-management-ux/deploy/scripts/New-WVDMgmtSetup.ps1",
+        "baseURL": "https://raw.githubusercontent.com/jbyway/WVD-mgmt-UX/master/scripts/",
+        "scriptUri": "https://raw.githubusercontent.com/jbyway/WVD-mgmt-UX/master/scripts/New-WVDMgmtSetup.ps1",
         "fileURI": "[concat(variables('baseURL'),'/msft-wvd-saas-offering.zip')]",
         "sku": "Free",
         "automationVariables": [
