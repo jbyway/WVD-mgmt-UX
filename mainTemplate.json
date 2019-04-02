@@ -71,11 +71,11 @@
                 "value": "[concat('\"',parameters('AzureLoginPassword'),'\"')]"
             },
             {
-                "name": "AADUserNameLogin",
+                "name": "AADUserName",
                 "value": "[concat('\"',parameters('AADUserName'),'\"')]"
             },
             {
-                "name": "AADPasswordLogin",
+                "name": "AADPassword",
                 "value": "[concat('\"',parameters('AADPassword'),'\"')]"
             },
             {
