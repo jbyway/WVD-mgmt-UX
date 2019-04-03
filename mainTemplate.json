@@ -50,6 +50,7 @@
     },
     "variables": {
         "accountName": "wvdsaas-autoAccount",
+        "aadaccountName": "wvdsaas-AADautoAccount",
         "credentialName": "DefaultAzureCredential",
         "AADcredentialName": "DefaultAADCredential",
         "runbookName": "msftsaasbook",
@@ -235,8 +236,8 @@
                     "location": "[resourceGroup().location]",
                     "tags": {},
                     "properties": {
-                        "AADUserNameLogin": "[parameters('AADUserName')]",
-                        "AADpasswordLogin": "[parameters('AADPassword')]"
+                        "AADUserName": "[parameters('AADUserName')]",
+                        "AADPassword": "[parameters('AADPassword')]"
                     },
                     "dependsOn": [
                         "[concat('Microsoft.Automation/automationAccounts/', variables('accountName'))]",
