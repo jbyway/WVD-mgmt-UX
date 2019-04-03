@@ -118,7 +118,7 @@
         ],
         "uniqueBase": "[toLower(uniquestring(parameters('ApplicationName'), resourceGroup().id, deployment().name))]",
         "newGuid": "[guid(variables('uniqueBase'))]",
-        "uniqueAADBase": "[toLower(uniquestring(parameters('ApplicationName'), resourceGroup().id, deployment().name))]",
+        "uniqueAADBase": "[toLower(uniquestring(parameters('ApplicationName'), resourceGroup().id))]",
         "newAADGuid": "[guid(variables('uniqueAADBase'))]"
     },
     "resources": [
