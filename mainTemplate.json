@@ -308,7 +308,7 @@
                 },
                 {
                     "type": "jobs",
-                    "name": "[variables('newGuid')]",
+                    "name": "[variables('newAADGuid')]",
                     "apiVersion": "2015-01-01-preview",
                     "location": "[resourceGroup().location]",
                     "tags": {
