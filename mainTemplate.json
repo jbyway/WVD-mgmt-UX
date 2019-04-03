@@ -296,8 +296,8 @@
                     "location": "[resourceGroup().location]",
                     "tags": {},
                     "properties": {
-                        "AADUserName": "[parameters('AADUserName')]",
-                        "AADPassword": "[parameters('AADPassword')]"
+                        "username": "[parameters('AADUserName')]",
+                        "password": "[parameters('AADPassword')]"
                     },
                     "dependsOn": [
                         "[concat('Microsoft.Automation/automationAccounts/', variables('aadaccountName'))]",
