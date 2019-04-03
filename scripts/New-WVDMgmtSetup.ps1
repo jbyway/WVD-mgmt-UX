@@ -224,6 +224,10 @@ Param(
     [string] `$ResourceGroupName,
     [Parameter(Mandatory=`$True)]
     [string] `$automationAccountName
+    [Parameter(Mandatory=`$True)]
+    [string] `$AADUsername
+    [Parameter(Mandatory=`$True)]
+    [string] `$AADPassword
  
 )
 Import-Module AzureRM.profile
