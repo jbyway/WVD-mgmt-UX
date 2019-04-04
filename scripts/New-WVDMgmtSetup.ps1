@@ -50,11 +50,11 @@ try
                 $wvdinfraWebAppId = "5a0aa725-4958-4b0c-80a9-34562e23f3b7"
                 #$serviceIdinfo = Get-AzureRmADServicePrincipal -ApplicationId $wvdinfraWebAppId
                 
-                #if(!$serviceIdinfo){
-                #$wvdinfraWebApp = "Windows Virtual Desktop"
+                if(!$serviceIdinfo){
+                $wvdinfraWebApp = "Windows Virtual Desktop"
                 # Commenting following line out due to error 
                 #$serviceIdinfo = Get-AzureRmADServicePrincipal -ApplicationId $wvdinfraWebApp
-                #}
+                }
 
                 $wvdInfraWebAppName = "Windows Virtual Desktop"
                 #replacing the variable below with a hard coded value as Get-AzureRMAdServicePrincipal was returning permission error
@@ -68,9 +68,9 @@ try
                 #Creating Client application in azure ad
                 Connect-AzureAD -Credential $Cred
                 $clientAdApp = New-AzureADApplication -DisplayName $wvdSaaS_clientapp_display_name -ReplyUrls $redirectURL -PublicClient $true -AvailableToOtherTenants $false -Verbose -ErrorAction Stop
-                $resourceAppId = $wvdinfraWebAppId #Get-AzureADServicePrincipal -SearchString $wvdInfraWebAppName | Where-Object {$_.DisplayName -eq $wvdInfraWebAppName}
+                $resourceAppId = Get-AzureADServicePrincipal -SearchString $wvdInfraWebAppName | Where-Object {$_.DisplayName -eq $wvdInfraWebAppName}
                 $clientappreq = New-Object -TypeName "Microsoft.Open.AzureAD.Model.RequiredResourceAccess"
-                $clientappreq.ResourceAppId = $resourceAppId
+                $clientappreq.ResourceAppId = $resourceAppId.AppId
                
                 foreach($permission in $resourceAppId.Oauth2Permissions){
                     $clientappreq.ResourceAccess += New-Object -TypeName "Microsoft.Open.AzureAD.Model.ResourceAccess" -ArgumentList $permission.Id,"Scope"
