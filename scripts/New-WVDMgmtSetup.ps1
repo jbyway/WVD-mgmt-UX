@@ -48,13 +48,13 @@ try
                 
                 #Static value of wvdInfra web appname/appid
                 $wvdinfraWebAppId = "5a0aa725-4958-4b0c-80a9-34562e23f3b7"
-                $serviceIdinfo = Get-AzureRmADServicePrincipal -ApplicationId $wvdinfraWebAppId
+                #$serviceIdinfo = Get-AzureRmADServicePrincipal -ApplicationId $wvdinfraWebAppId
                 
-                if(!$serviceIdinfo){
-                $wvdinfraWebApp = "Windows Virtual Desktop"
+                #if(!$serviceIdinfo){
+                #$wvdinfraWebApp = "Windows Virtual Desktop"
                 # Commenting following line out due to error 
                 #$serviceIdinfo = Get-AzureRmADServicePrincipal -ApplicationId $wvdinfraWebApp
-                }
+                #}
 
                 $wvdInfraWebAppName = "Windows Virtual Desktop"
                 #replacing the variable below with a hard coded value as Get-AzureRMAdServicePrincipal was returning permission error
