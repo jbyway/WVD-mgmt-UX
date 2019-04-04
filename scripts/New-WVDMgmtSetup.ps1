@@ -5,8 +5,6 @@ $ResourceURL = Get-AutomationVariable -Name 'ResourceURL'
 $fileURI = Get-AutomationVariable -Name 'fileURI'
 $Username = Get-AutomationVariable -Name 'Username'
 $Password = Get-AutomationVariable -Name 'Password'
-$AADUserName = Get-AutomationVariable -Name 'AADUserName'
-$AADPassword = Get-AutomationVariable -Name 'AADPassword'
 $automationAccountName = Get-AutomationVariable -Name 'accountName'
 $WebApp = Get-AutomationVariable -Name 'webApp'
 $ApiApp = Get-AutomationVariable -Name 'apiApp'
@@ -54,21 +52,21 @@ try
                 
                 if(!$serviceIdinfo){
                 $wvdinfraWebApp = "Windows Virtual Desktop"
-                $serviceIdinfo = Get-AzureRmADServicePrincipal -ApplicationId $wvdinfraWebApp
+                # Commenting following line out due to error 
+                #$serviceIdinfo = Get-AzureRmADServicePrincipal -ApplicationId $wvdinfraWebApp
                 }
 
-                $wvdInfraWebAppName = $serviceIdinfo.DisplayName
+                $wvdInfraWebAppName = "Windows Virtual Desktop"
+                #replacing the variable below with a hard coded value as Get-AzureRMAdServicePrincipal was returning permission error
+                #$wvdInfraWebAppName = $serviceIdinfo.DisplayName
                 #generate unique ID based on subscription ID
                 $unique_subscription_id = ($subsriptionid).Replace('-', '').substring(0, 19)
                 
-                $CredentialAADAssetName = 'DefaultAADCredential'
 
-                #Get the credential with the above name from the Automation Asset store
-                $AADCred = Get-AutomationPSCredential -Name $CredentialAADAssetName
                 #generate the display name for native app in AAD
                 $wvdSaaS_clientapp_display_name = "wvdSaaS" + $ResourceGroupName.ToLowerInvariant() + $unique_subscription_id.ToLowerInvariant()
                 #Creating Client application in azure ad
-                Connect-AzureAD -Credential $AADCred
+                Connect-AzureAD -Credential $Cred
                 $clientAdApp = New-AzureADApplication -DisplayName $wvdSaaS_clientapp_display_name -ReplyUrls $redirectURL -PublicClient $true -AvailableToOtherTenants $false -Verbose -ErrorAction Stop
                 $resourceAppId = Get-AzureADServicePrincipal -SearchString $wvdInfraWebAppName | Where-Object {$_.DisplayName -eq $wvdInfraWebAppName}
                 $clientappreq = New-Object -TypeName "Microsoft.Open.AzureAD.Model.RequiredResourceAccess"
@@ -224,18 +222,22 @@ Param(
     [string] `$ResourceGroupName,
     [Parameter(Mandatory=`$True)]
     [string] `$automationAccountName
-    [Parameter(Mandatory=`$True)]
-    [string] `$AADUsername
-    [Parameter(Mandatory=`$True)]
-    [string] `$AADPassword
  
 )
 Import-Module AzureRM.profile
 Import-Module AzureRM.Automation
+Import-Module AzureRM.Resources
 `$Securepass=ConvertTo-SecureString -String `$Password -AsPlainText -Force
 `$Azurecred=New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList(`$Username, `$Securepass)
 `$login=Login-AzureRmAccount -Credential `$Azurecred -SubscriptionId `$SubscriptionId
-Remove-AzureRmAutomationAccount -Name `$automationAccountName -ResourceGroupName `$ResourceGroupName -Force 
+`$AutomationAccount = Get-AzureRmAutomationAccount -ResourceGroupName `$ResourceGroupName -Name `$automationAccountName
+if(`$AutomationAccount){
+#Remove-AzureRmAutomationAccount -Name `$automationAccountName -ResourceGroupName `$ResourceGroupName -Force
+`$resourcedetails = Get-AzureRmResource -Name `$automationAccountName -ResourceGroupName `$ResourceGroupName
+Remove-AzureRmResource -ResourceId `$resourcedetails.ResourceId -Force
+}else{
+exit
+}
 "@| Out-File -FilePath RemoveAccount:\RemoveAccount.ps1 -Force
 
     $runbookName='removewvdsaasacctbook'
@@ -256,5 +258,5 @@ Remove-AzureRmAutomationAccount -Name `$automationAccountName -ResourceGroupName
     Publish-AzureRmAutomationRunbook -Name $runbookName -ResourceGroupName $ResourcegroupName -AutomationAccountName $automationAccountName
 
     #Providing parameter values to powershell script file
-    $params=@{"UserName"=$UserName;"Password"=$Password;"AADUsername"=$AADUserName;"AADPassword"=$AADPassword;"ResourcegroupName"=$ResourcegroupName;"SubscriptionId"=$subsriptionid;"automationAccountName"=$automationAccountName}
+    $params=@{"UserName"=$UserName;"Password"=$Password;"ResourcegroupName"=$ResourcegroupName;"SubscriptionId"=$subsriptionid;"automationAccountName"=$automationAccountName}
     Start-AzureRmAutomationRunbook -Name $runbookName -ResourceGroupName $ResourcegroupName -AutomationAccountName $automationAccountName -Parameters $params
