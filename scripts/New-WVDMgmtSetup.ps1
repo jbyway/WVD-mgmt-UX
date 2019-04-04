@@ -68,9 +68,9 @@ try
                 #Creating Client application in azure ad
                 Connect-AzureAD -Credential $Cred
                 $clientAdApp = New-AzureADApplication -DisplayName $wvdSaaS_clientapp_display_name -ReplyUrls $redirectURL -PublicClient $true -AvailableToOtherTenants $false -Verbose -ErrorAction Stop
-                $resourceAppId = Get-AzureADServicePrincipal -SearchString $wvdInfraWebAppName | Where-Object {$_.DisplayName -eq $wvdInfraWebAppName}
+                $resourceAppId = $wvdinfraWebAppId #Get-AzureADServicePrincipal -SearchString $wvdInfraWebAppName | Where-Object {$_.DisplayName -eq $wvdInfraWebAppName}
                 $clientappreq = New-Object -TypeName "Microsoft.Open.AzureAD.Model.RequiredResourceAccess"
-                $clientappreq.ResourceAppId = $resourceAppId.AppId
+                $clientappreq.ResourceAppId = $resourceAppId
                
                 foreach($permission in $resourceAppId.Oauth2Permissions){
                     $clientappreq.ResourceAccess += New-Object -TypeName "Microsoft.Open.AzureAD.Model.ResourceAccess" -ArgumentList $permission.Id,"Scope"
