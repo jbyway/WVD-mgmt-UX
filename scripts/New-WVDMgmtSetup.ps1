@@ -8,6 +8,10 @@ $Password = Get-AutomationVariable -Name 'Password'
 $automationAccountName = Get-AutomationVariable -Name 'accountName'
 $WebApp = Get-AutomationVariable -Name 'webApp'
 $ApiApp = Get-AutomationVariable -Name 'apiApp'
+$MSDNUsername = Get-AutomationVariable -name 'MSDNUsername'
+$MSDNPassword = Get-AutomationVariable -name 'MSDNPassword'
+
+$subsriptionid = "449d7dc2-6d6e-4859-8a63-fee325fc7dc5"
 
 Invoke-WebRequest -Uri $fileURI -OutFile "C:\msft-wvd-saas-offering.zip"
 New-Item -Path "C:\msft-wvd-saas-offering" -ItemType directory -Force -ErrorAction SilentlyContinue

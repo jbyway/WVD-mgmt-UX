@@ -28,6 +28,18 @@
                 "description": "The password that corresponds to the AzureAD UserPrincipalName."
             }
         },
+        "MSDNSubUserName": {
+            "type": "string",
+            "metadata": {
+                "description": "MSDN User must have RDS Owner on the WVD tenant and must have Contributor on the Azure subscription"
+            }
+        },
+        "MSDNSubPassword": {
+            "type": "securestring",
+            "metadata": {
+                "description": "The password that corresponds to the MSDN Subscription UserPrincipalName."
+            }
+        },
         "ApplicationName": {
             "type": "string",
             "metadata": {
@@ -39,6 +51,7 @@
     "variables": {
         "accountName": "wvdsaas-autoAccount",
         "credentialName": "DefaultAzureCredential",
+        "MSDNCredentialName": "DefaultMSDNCredential",
         "runbookName": "msftsaasbook",
         "webAPIAppName":"[concat(parameters('ApplicationName'),'-API')]",
         "hostingPlanName": "[concat(parameters('ApplicationName'),'-SPlan')]",
@@ -88,6 +101,14 @@
             {
                 "name": "accountName",
                 "value": "[concat('\"',variables('accountName'),'\"')]"
+            },
+            {
+                "name": "MSDNUser",
+                "value": "[concat('\"',parameters('MSDNSubUserName'),'\"')]"
+            },
+            {
+                "name": "MSDNPwd",
+                "value": "[concat('\"',parameters('MSDNSubPassword'),'\"')]"
             },
             {
                 "name": "fileURI",
