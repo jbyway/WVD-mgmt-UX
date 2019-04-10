@@ -28,18 +28,6 @@
                 "description": "The password that corresponds to the AzureAD UserPrincipalName."
             }
         },
-        "MSDNSubUserName": {
-            "type": "string",
-            "metadata": {
-                "description": "MSDN User must have RDS Owner on the WVD tenant and must have Contributor on the Azure subscription"
-            }
-        },
-        "MSDNSubPassword": {
-            "type": "securestring",
-            "metadata": {
-                "description": "The password that corresponds to the MSDN Subscription UserPrincipalName."
-            }
-        },
         "ApplicationName": {
             "type": "string",
             "metadata": {
@@ -51,13 +39,12 @@
     "variables": {
         "accountName": "wvdsaas-autoAccount",
         "credentialName": "DefaultAzureCredential",
-        "MSDNCredentialName": "DefaultMSDNCredential",
         "runbookName": "msftsaasbook",
         "webAPIAppName":"[concat(parameters('ApplicationName'),'-API')]",
         "hostingPlanName": "[concat(parameters('ApplicationName'),'-SPlan')]",
         "serviceplansku":"S1",
         "workerSize": "0",
-        "baseURL": "https://raw.githubusercontent.com/jbyway/WVD-mgmt-UX/master/scripts/",
+        "baseURL": "https://raw.githubusercontent.com/Azure/RDS-Templates/master/wvd-templates/wvd-management-ux/deploy/scripts/",
         "scriptUri": "[concat(variables('baseURL'),'New-WVDMgmtSetup.ps1')]",
         "fileURI": "[concat(variables('baseURL'),'/msft-wvd-saas-offering.zip')]",
         "sku": "Free",
@@ -101,14 +88,6 @@
             {
                 "name": "accountName",
                 "value": "[concat('\"',variables('accountName'),'\"')]"
-            },
-            {
-                "name": "MSDNUser",
-                "value": "[concat('\"',parameters('MSDNSubUserName'),'\"')]"
-            },
-            {
-                "name": "MSDNPwd",
-                "value": "[concat('\"',parameters('MSDNSubPassword'),'\"')]"
             },
             {
                 "name": "fileURI",

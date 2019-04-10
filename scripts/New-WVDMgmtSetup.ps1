@@ -8,10 +8,6 @@ $Password = Get-AutomationVariable -Name 'Password'
 $automationAccountName = Get-AutomationVariable -Name 'accountName'
 $WebApp = Get-AutomationVariable -Name 'webApp'
 $ApiApp = Get-AutomationVariable -Name 'apiApp'
-$MSDNUsername = Get-AutomationVariable -name 'MSDNUsername'
-$MSDNPassword = Get-AutomationVariable -name 'MSDNPassword'
-
-$subsriptionid = "449d7dc2-6d6e-4859-8a63-fee325fc7dc5"
 
 Invoke-WebRequest -Uri $fileURI -OutFile "C:\msft-wvd-saas-offering.zip"
 New-Item -Path "C:\msft-wvd-saas-offering" -ItemType directory -Force -ErrorAction SilentlyContinue
@@ -52,17 +48,14 @@ try
                 
                 #Static value of wvdInfra web appname/appid
                 $wvdinfraWebAppId = "5a0aa725-4958-4b0c-80a9-34562e23f3b7"
-                #$serviceIdinfo = Get-AzureRmADServicePrincipal -ApplicationId $wvdinfraWebAppId
+                $serviceIdinfo = Get-AzureRmADServicePrincipal -ApplicationId $wvdinfraWebAppId
                 
                 if(!$serviceIdinfo){
                 $wvdinfraWebApp = "Windows Virtual Desktop"
-                # Commenting following line out due to error 
-                #$serviceIdinfo = Get-AzureRmADServicePrincipal -ApplicationId $wvdinfraWebApp
+                $serviceIdinfo = Get-AzureRmADServicePrincipal -DisplayName $wvdinfraWebApp
                 }
 
-                $wvdInfraWebAppName = "Windows Virtual Desktop"
-                #replacing the variable below with a hard coded value as Get-AzureRMAdServicePrincipal was returning permission error
-                #$wvdInfraWebAppName = $serviceIdinfo.DisplayName
+                $wvdInfraWebAppName = $serviceIdinfo.DisplayName
                 #generate unique ID based on subscription ID
                 $unique_subscription_id = ($subsriptionid).Replace('-', '').substring(0, 19)
                 
@@ -71,7 +64,7 @@ try
                 $wvdSaaS_clientapp_display_name = "wvdSaaS" + $ResourceGroupName.ToLowerInvariant() + $unique_subscription_id.ToLowerInvariant()
                 #Creating Client application in azure ad
                 Connect-AzureAD -Credential $Cred
-                $clientAdApp = New-AzureADApplication -DisplayName $wvdSaaS_clientapp_display_name -ReplyUrls $redirectURL -PublicClient $true -AvailableToOtherTenants $true -Verbose -ErrorAction Stop
+                $clientAdApp = New-AzureADApplication -DisplayName $wvdSaaS_clientapp_display_name -ReplyUrls $redirectURL -PublicClient $true -AvailableToOtherTenants $false -Verbose -ErrorAction Stop
                 $resourceAppId = Get-AzureADServicePrincipal -SearchString $wvdInfraWebAppName | Where-Object {$_.DisplayName -eq $wvdInfraWebAppName}
                 $clientappreq = New-Object -TypeName "Microsoft.Open.AzureAD.Model.RequiredResourceAccess"
                 $clientappreq.ResourceAppId = $resourceAppId.AppId
