@@ -32,7 +32,7 @@ Import-Module AzureAD
 
     #Get the credential with the above name from the Automation Asset store
     $Cred = Get-AutomationPSCredential -Name $CredentialAssetName
-    Add-AzureRmAccount -Environment 'AzureCloud' -Credential $Cred -Subscription $azuresubscriptionid
+    Add-AzureRmAccount -Environment 'AzureCloud' -Credential $Cred
     Select-AzureRmSubscription -SubscriptionId $subsriptionid
     $CodeBitPath= "C:\msft-wvd-saas-offering\msft-wvd-saas-offering"
     $WebAppDirectory = ".\msft-wvd-saas-web"
