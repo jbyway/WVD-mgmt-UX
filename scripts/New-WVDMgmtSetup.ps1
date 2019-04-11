@@ -1,4 +1,6 @@
 $subsriptionid = Get-AutomationVariable -Name 'subsriptionid'
+$aadtenantid = Get-AutomationVariable -Name 'aadtenantid'
+$azuresubscriptionid = Get-AutomationVariable -Name 'azuresubscriptionid'
 $ResourceGroupName = Get-AutomationVariable -Name 'ResourceGroupName'
 $RDBrokerURL = Get-AutomationVariable -Name 'RDBrokerURL'
 $ResourceURL = Get-AutomationVariable -Name 'ResourceURL'
@@ -30,7 +32,7 @@ Import-Module AzureAD
 
     #Get the credential with the above name from the Automation Asset store
     $Cred = Get-AutomationPSCredential -Name $CredentialAssetName
-    Add-AzureRmAccount -Environment 'AzureCloud' -Credential $Cred
+    Add-AzureRmAccount -Environment 'AzureCloud' -Credential $Cred -Subscription $azuresubscriptionid
     Select-AzureRmSubscription -SubscriptionId $subsriptionid
     $CodeBitPath= "C:\msft-wvd-saas-offering\msft-wvd-saas-offering"
     $WebAppDirectory = ".\msft-wvd-saas-web"
@@ -55,7 +57,7 @@ try
                 $serviceIdinfo = Get-AzureRmADServicePrincipal -DisplayName $wvdinfraWebApp
                 }
 
-                $wvdInfraWebAppName = $serviceIdinfo.DisplayName
+                $wvdInfraWebAppName = $wvdinfraWebApp
                 #generate unique ID based on subscription ID
                 $unique_subscription_id = ($subsriptionid).Replace('-', '').substring(0, 19)
                 

@@ -28,6 +28,18 @@
                 "description": "The password that corresponds to the AzureAD UserPrincipalName."
             }
         },
+        "AADSubscriptionId": {
+            "type": "string",
+            "metadata": {
+                "description": "Enter the AAD Tenant ID for your tenant."
+            }
+        },
+        "AzureSubscriptionId": {
+            "type": "string",
+            "metadata": {
+                "description": "Enter the Azure Subscription ID where your Tenant Host Pool is hosted."
+            }
+        },
         "ApplicationName": {
             "type": "string",
             "metadata": {
@@ -64,6 +76,14 @@
             {
                 "name": "webApp",
                 "value": "[concat('\"',parameters('ApplicationName'),'\"')]"
+            },
+            {
+                "name": "aadsubscriptionid",
+                "value": "[concat('\"',paramaters('aadsubscriptionid'),'\")]"
+            },
+            {
+                "name": "azuresubscriptionid",
+                "value": "[concat('\"',paramaters('azuresubscriptionid'),'\")]"
             },
             {
                 "name": "apiApp",
