@@ -79,11 +79,11 @@
             },
             {
                 "name": "aadsubscriptionid",
-                "value": "[concat('\"',paramaters('aadsubscriptionid'),'\")]"
+                "value": "[concat('\"',paramaters('aadsubscriptionid'),'\"')]"
             },
             {
                 "name": "azuresubscriptionid",
-                "value": "[concat('\"',paramaters('azuresubscriptionid'),'\")]"
+                "value": "[concat('\"',paramaters('azuresubscriptionid'),'\"')]"
             },
             {
                 "name": "apiApp",
