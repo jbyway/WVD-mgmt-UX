@@ -1,6 +1,4 @@
-$subsriptionid = Get-AutomationVariable -Name 'subsriptionid'
-$aadtenantid = Get-AutomationVariable -Name 'aadtenantid'
-$azuresubscriptionid = Get-AutomationVariable -Name 'azuresubscriptionid'
+$subscriptionid = Get-AutomationVariable -Name 'subscriptionid'
 $ResourceGroupName = Get-AutomationVariable -Name 'ResourceGroupName'
 $RDBrokerURL = Get-AutomationVariable -Name 'RDBrokerURL'
 $ResourceURL = Get-AutomationVariable -Name 'ResourceURL'
@@ -24,6 +22,8 @@ Import-Module Azure
 Import-Module AzureRM.Automation
 Import-Module AzureAD
 
+
+
     Set-ExecutionPolicy -ExecutionPolicy Undefined -Scope Process -Force -Confirm:$false
     Set-ExecutionPolicy -ExecutionPolicy Unrestricted -Scope LocalMachine -Force -Confirm:$false
     Get-ExecutionPolicy -List
@@ -33,12 +33,46 @@ Import-Module AzureAD
     #Get the credential with the above name from the Automation Asset store
     $Cred = Get-AutomationPSCredential -Name $CredentialAssetName
     Add-AzureRmAccount -Environment 'AzureCloud' -Credential $Cred
-    Select-AzureRmSubscription -SubscriptionId $subsriptionid
+    Select-AzureRmSubscription -SubscriptionId $subscriptionid
     $CodeBitPath= "C:\msft-wvd-saas-offering\msft-wvd-saas-offering"
     $WebAppDirectory = ".\msft-wvd-saas-web"
     $WebAppExtractionPath = ".\msft-wvd-saas-web\msft-wvd-saas-web.zip"
     $ApiAppDirectory = ".\msft-wvd-saas-api"
     $ApiAppExtractionPath = ".\msft-wvd-saas-api\msft-wvd-saas-api.zip"
+
+	#Function to get PublishingProfileCredentials
+	function Get-PublishingProfileCredentials($resourceGroupName, $webAppName){
+ 
+    $resourceType = "Microsoft.Web/sites/config"
+    $resourceName = "$webAppName/publishingcredentials"
+ 
+    $publishingCredentials = Invoke-AzureRmResourceAction -ResourceGroupName $resourceGroupName -ResourceType $resourceType -ResourceName $resourceName -Action list -ApiVersion 2015-08-01 -Force
+ 
+       return $publishingCredentials
+} 
+ 
+	#Function to get KuduApiAuthorisationHeaderValue
+	function Get-KuduApiAuthorisationHeaderValue($resourceGroupName, $webAppName, $slotName = $null){
+    $publishingCredentials = Get-PublishingProfileCredentials $resourceGroupName $webAppName $slotName
+    return ("Basic {0}" -f [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(("{0}:{1}" -f $publishingCredentials.Properties.PublishingUserName, $publishingCredentials.Properties.PublishingPassword))))
+}
+
+	#Function to confirm files are uploaded or not in both azure app services
+	function RunCommand($dir,$command,$resourceGroupName, $webAppName, $slotName = $null){
+        $kuduApiAuthorisationToken = Get-KuduApiAuthorisationHeaderValue $resourceGroupName $webAppName $slotName
+        $kuduApiUrl="https://$webAppName.scm.azurewebsites.net/api/command"
+        $Body = 
+          @{
+          "command"=$command;
+           "dir"=$dir
+           } 
+        $bodyContent=@($Body) | ConvertTo-Json
+        #Write-output $bodyContent
+         Invoke-RestMethod -Uri $kuduApiUrl `
+                            -Headers @{"Authorization"=$kuduApiAuthorisationToken;"If-Match"="*"} `
+                            -Method POST -ContentType "application/json" -Body $bodyContent
+    }
+
 try
 {
                 # Get Url of Web-App
@@ -50,32 +84,39 @@ try
                 
                 #Static value of wvdInfra web appname/appid
                 $wvdinfraWebAppId = "5a0aa725-4958-4b0c-80a9-34562e23f3b7"
-                $serviceIdinfo = Get-AzureRmADServicePrincipal -ApplicationId $wvdinfraWebAppId
+                $serviceIdinfo = Get-AzureRmADServicePrincipal | Where-Object {$_.ApplicationId -eq $wvdinfraWebAppId} -ErrorAction SilentlyContinue
                 
                 if(!$serviceIdinfo){
                 $wvdinfraWebApp = "Windows Virtual Desktop"
-                $serviceIdinfo = Get-AzureRmADServicePrincipal -DisplayName $wvdinfraWebApp
-                }
-
-                $wvdInfraWebAppName = $wvdinfraWebApp
+                $serviceIdinfo = Get-AzureRmADServicePrincipal -DisplayName $wvdinfraWebApp -ErrorAction SilentlyContinue
+                }				
+				
+                $wvdInfraWebAppName = "Windows Virtual Desktop"
                 #generate unique ID based on subscription ID
-                $unique_subscription_id = ($subsriptionid).Replace('-', '').substring(0, 19)
+                $unique_subscription_id = ($subscriptionid).Replace('-', '').substring(0, 19)
                 
 
                 #generate the display name for native app in AAD
                 $wvdSaaS_clientapp_display_name = "wvdSaaS" + $ResourceGroupName.ToLowerInvariant() + $unique_subscription_id.ToLowerInvariant()
                 #Creating Client application in azure ad
                 Connect-AzureAD -Credential $Cred
-                $clientAdApp = New-AzureADApplication -DisplayName $wvdSaaS_clientapp_display_name -ReplyUrls $redirectURL -PublicClient $true -AvailableToOtherTenants $true -Verbose -ErrorAction Stop
+                $clientAdApp = New-AzureADApplication -DisplayName $wvdSaaS_clientapp_display_name -ReplyUrls $redirectURL -PublicClient $true -AvailableToOtherTenants $false -Verbose -ErrorAction Stop
                 $resourceAppId = Get-AzureADServicePrincipal -SearchString $wvdInfraWebAppName | Where-Object {$_.DisplayName -eq $wvdInfraWebAppName}
                 $clientappreq = New-Object -TypeName "Microsoft.Open.AzureAD.Model.RequiredResourceAccess"
                 $clientappreq.ResourceAppId = $resourceAppId.AppId
-               
                 foreach($permission in $resourceAppId.Oauth2Permissions){
                     $clientappreq.ResourceAccess += New-Object -TypeName "Microsoft.Open.AzureAD.Model.ResourceAccess" -ArgumentList $permission.Id,"Scope"
                 }
-                Set-AzureADApplication -ObjectId $clientAdApp.ObjectId -RequiredResourceAccess $clientappreq -ErrorAction Stop
+                #Setting up the WVD Required Access to Client Application
+				 Set-AzureADApplication -ObjectId $clientAdApp.ObjectId -RequiredResourceAccess $clientappreq -ErrorAction Stop
 
+				}
+                
+        catch
+        {
+            Write-Output $_.Exception.Message
+            throw $_.Exception.Message
+        }
 
         if($ApiApp)
         {
@@ -116,7 +157,7 @@ try
                 $base64AuthInfo = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(("{0}:{1}" -f $ApiAppUserName, $ApiAppPassword)))
                 $userAgent = "powershell/1.0"
                 Invoke-RestMethod -Uri $apiUrl -Headers @{Authorization=("Basic {0}" -f $base64AuthInfo)} -UserAgent $userAgent -Method POST -InFile $filePath -ContentType "multipart/form-data"
-                Write-Output "Uploading of Extracted files to Api-App is Successful"
+                
                 $ApplicationId=$clientAdApp.AppID
                 # Adding App Settings to Api-App
                 Write-Output "Adding App settings to Api-App"
@@ -124,12 +165,24 @@ try
                                     "RDBrokerUrl" = "$RDBrokerURL";
                                     "ResourceUrl" = "$ResourceURL";
                                     "RedirectURI" = "https://"+"$WebUrl"+"/";
-            }
+				}
                 Set-AzureRmWebApp -AppSettings $ApiAppSettings -Name $ApiApp -ResourceGroupName $ResourceGroupName
+				
+				#Checking Extracted files are uploaded or not
+				$returnvalue = RunCommand -dir "site\wwwroot\" -command "ls web.config"  -resourceGroupName $resourceGroupName -webAppName $ApiApp
+				if($returnvalue.output){
+				Write-Output "Uploading of Extracted files to Api-App is Successful"
+				write-output "Published files are uploaded successfully"
+				}
+				else{
+				Write-output "published files are not uploaded Error: $returnvalue.error"
+				throw $returnvalue.error
+				}
             }
-            catch [Exception]
+            catch
             {
                 Write-Output $_.Exception.Message
+                throw $_.Exception.Message
             }
         }
         if($WebApp -and $ApiApp)
@@ -189,22 +242,28 @@ try
                 $base64AuthInfo = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(("{0}:{1}" -f $WebAppUserName, $WebApppassword)))
                 $userAgent = "powershell/1.0"
                 Invoke-RestMethod -Uri $apiUrl -Headers @{Authorization=("Basic {0}" -f $base64AuthInfo)} -UserAgent $userAgent -Method POST -InFile $filePath -ContentType "multipart/form-data"
-                Write-Output "Uploading of Extracted files to Web-App is Successful"
+                
+				#Checking Extracted files are uploaded or not
+				$returnvalue = RunCommand -dir "site\wwwroot\" -command "ls web.config"  -resourceGroupName $resourceGroupName -webAppName $WebApp
+				if($returnvalue.output)
+				{
+				Write-Output "Uploading of Extracted files to Web-App is Successful"
+				Write-Output "Published files are uploaded successfully"
+				}
+				else{
+				Write-output "Extracted files are not uploaded Error: $returnvalue.error"
+				throw $returnvalue.error
+				}
             }
-            catch [Exception]
+            catch
             {
                 Write-Output $_.Exception.Message
+                throw $_.Exception.Message
             }
 
             Write-Output "Api URL : https://$ApiUrl"
             Write-Output "Web URL : https://$WebUrl"
         }
-}
-
-catch [Exception]
-{
-    Write-Output $_.Exception.Message
-}
 
 
 
@@ -257,5 +316,5 @@ exit
     Publish-AzureRmAutomationRunbook -Name $runbookName -ResourceGroupName $ResourcegroupName -AutomationAccountName $automationAccountName
 
     #Providing parameter values to powershell script file
-    $params=@{"UserName"=$UserName;"Password"=$Password;"ResourcegroupName"=$ResourcegroupName;"SubscriptionId"=$subsriptionid;"automationAccountName"=$automationAccountName}
-    Start-AzureRmAutomationRunbook -Name $runbookName -ResourceGroupName $ResourcegroupName -AutomationAccountName $automationAccountName -Parameters $params
+    $params=@{"UserName"=$UserName;"Password"=$Password;"ResourcegroupName"=$ResourcegroupName;"SubscriptionId"=$subscriptionid;"automationAccountName"=$automationAccountName}
+    Start-AzureRmAutomationRunbook -Name $runbookName -ResourceGroupName $ResourcegroupName -AutomationAccountName $automationAccountName -Parameters $params | Out-Null
