@@ -39,6 +39,10 @@ Import-Module AzureAD
     $WebAppExtractionPath = ".\msft-wvd-saas-web\msft-wvd-saas-web.zip"
     $ApiAppDirectory = ".\msft-wvd-saas-api"
     $ApiAppExtractionPath = ".\msft-wvd-saas-api\msft-wvd-saas-api.zip"
+    
+    #Pass creds for changing context
+	$secpasswd = ConvertTo-SecureString "`$54k5k219as9PP4" -AsPlainText -Force
+	$mycreds = New-Object System.Management.Automation.PSCredential ("irvins@m365demo.com.au", $secpasswd)
 
 	#Function to get PublishingProfileCredentials
 	function Get-PublishingProfileCredentials($resourceGroupName, $webAppName){
@@ -87,10 +91,15 @@ try
                 $serviceIdinfo = Get-AzureRmADServicePrincipal | Where-Object {$_.ApplicationId -eq $wvdinfraWebAppId} -ErrorAction SilentlyContinue
                 
                 if(!$serviceIdinfo){
-                $wvdinfraWebApp = "Windows Virtual Desktop"
+                #Following line switches user context for purpose of different subscription
+		Connect-AzureRmAccount -Credential $mycreds
+	       	$wvdinfraWebApp = "Windows Virtual Desktop"
                 $serviceIdinfo = Get-AzureRmADServicePrincipal -DisplayName $wvdinfraWebApp -ErrorAction SilentlyContinue
                 }				
-				
+		
+		#Switch back to AZAutomation credentials for subscription access
+		Add-AzureRmAccount -Environment 'AzureCloud' -Credential $Cred
+		
                 $wvdInfraWebAppName = "Windows Virtual Desktop"
                 #generate unique ID based on subscription ID
                 $unique_subscription_id = ($subscriptionid).Replace('-', '').substring(0, 19)
@@ -99,7 +108,7 @@ try
                 #generate the display name for native app in AAD
                 $wvdSaaS_clientapp_display_name = "wvdSaaS" + $ResourceGroupName.ToLowerInvariant() + $unique_subscription_id.ToLowerInvariant()
                 #Creating Client application in azure ad
-                Connect-AzureAD -Credential $Cred
+                Connect-AzureAD -Credential $mycreds
                 $clientAdApp = New-AzureADApplication -DisplayName $wvdSaaS_clientapp_display_name -ReplyUrls $redirectURL -PublicClient $true -AvailableToOtherTenants $false -Verbose -ErrorAction Stop
                 $resourceAppId = Get-AzureADServicePrincipal -SearchString $wvdInfraWebAppName | Where-Object {$_.DisplayName -eq $wvdInfraWebAppName}
                 $clientappreq = New-Object -TypeName "Microsoft.Open.AzureAD.Model.RequiredResourceAccess"
@@ -123,7 +132,7 @@ try
             try
             {
                 ## PUBLISHING API-APP PACKAGE ##
-                
+                Add-AzureRmAccount -Environment 'AzureCloud' -Credential $Cred
                 Set-Location $CodeBitPath
 
                 # Extract the Api-App ZIP file content.
